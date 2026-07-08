@@ -21,12 +21,12 @@ const db=client.db(ASTRA_DB_API_ENDPOINT,{namespace:ASTRA_DB_NAMESPACE})
 
 export async function  POST(req:Request){
     try{
-        const {messages}=await req.json
+        const {messages}=await req.json()  // Fix 1: req.json() not req.json
         const lastMessage=messages[messages?.length-1]?.content
 
         let docContext=""
 
-        await openai.embeddings.create({
+        const embedding = await openai.embeddings.create({  // Fix 2: store result in `embedding`
             model:"text-embedding-3-small",
             input:[lastMessage],
             encoding_format:"float",
@@ -43,10 +43,10 @@ export async function  POST(req:Request){
                 limit:10
             })
 
-            const documents=await cursor.toArray;
+            const documents=await cursor.toArray()  // Fix 3: toArray() not toArray
 
-            const docsMap=documents?.map(doc=> doc.text)
-            docContext  = Json.stringify(docsMap)
+            const docsMap=documents?.map(doc=>doc.text)
+            docContext = JSON.stringify(docsMap)  // Fix 4: JSON not Json
             
         }
 
@@ -71,11 +71,11 @@ export async function  POST(req:Request){
         messages:[template,...messages]
     })
 
-    const stream=OpenAIStream(response){
-        return new StreamingTextResponse(stream)
+    const stream=OpenAIStream(response)  // Fix 5: proper syntax - call OpenAIStream, then return
+    return new StreamingTextResponse(stream)
+
     }catch(err){
         throw err   
     }
 
-}
 }

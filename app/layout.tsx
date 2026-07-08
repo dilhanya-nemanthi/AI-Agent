@@ -1,4 +1,3 @@
-import { Children } from "react"
 import "./global.css"
 
 export const metadata={
@@ -17,3 +16,5 @@ const RootLayout=({children})=>{
         )
 
 }
+
+export default RootLayout
