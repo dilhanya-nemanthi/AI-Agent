@@ -7,7 +7,7 @@ import PromptSuggestionRow from "./components/PromptSuggestionRow"
 import Bubble from "./components/Bubble"
 
 const Home = () => {
-    const { append, isLoading, messages, input, handleInputChange, handleSubmit } = useChat()
+    const { append, isLoading, messages, input, handleInputChange, handleSubmit, stop } = useChat()
     const chatContainerRef = useRef<HTMLDivElement>(null)
 
     const noMessages = !messages || messages.length === 0
@@ -34,6 +34,31 @@ const Home = () => {
     // Find the index of a user message in the full messages array
     const getMessageIndex = (userMsg: Message) =>
         messages.findIndex(m => m.id === userMsg.id)
+
+    const downloadAsPDF = () => {
+        const printWindow = window.open("", "_blank")
+        if (!printWindow) return
+        const content = messages
+            .map(m => `<div style="margin:12px 0; padding:10px 14px; border-radius:10px;
+                background:${m.role === "user" ? "#E1F4FF" : "#dce7ff"};
+                max-width:80%; ${m.role === "user" ? "margin-left:auto;" : ""} font-family:monospace;">
+                <strong>${m.role === "user" ? "You" : "AI"}:</strong><br/>${m.content.replace(/\n/g, "<br/>")}
+            </div>`)
+            .join("")
+        printWindow.document.write(`
+            <!DOCTYPE html><html><head>
+            <title>Astronomy Research Chat</title>
+            <style>body{font-family:monospace;padding:30px;max-width:800px;margin:0 auto}
+            h1{font-size:20px;border-bottom:2px solid #333;padding-bottom:10px}
+            </style></head><body>
+            <h1>Astronomy Research Agent – Chat Export</h1>
+            <p style="color:#666;font-size:13px">Exported on ${new Date().toLocaleString()}</p>
+            ${content}
+            </body></html>`)
+        printWindow.document.close()
+        printWindow.focus()
+        setTimeout(() => printWindow.print(), 400)
+    }
 
     return (
         <div className="app-layout">
@@ -94,15 +119,37 @@ const Home = () => {
                         </>
                     )}
 
-                    <form onSubmit={handleSubmit}>
-                        <input
-                            className="question-box"
-                            onChange={handleInputChange}
-                            value={input}
-                            placeholder="Ask me something"
-                        />
-                        <input type="submit" value="Ask" />
-                    </form>
+                    <div className="chat-toolbar">
+                        <form onSubmit={handleSubmit} className="chat-form">
+                            <input
+                                className="question-box"
+                                onChange={handleInputChange}
+                                value={input}
+                                placeholder="Ask me something"
+                            />
+                            <input type="submit" value="Ask" />
+                        </form>
+                        <div className="toolbar-actions">
+                            <button
+                                type="button"
+                                className="btn-pause"
+                                onClick={() => stop()}
+                                disabled={!isLoading}
+                                title="Stop the current response"
+                            >
+                                ⏹ Pause
+                            </button>
+                            <button
+                                type="button"
+                                className="btn-pdf"
+                                onClick={downloadAsPDF}
+                                disabled={messages.length === 0}
+                                title="Download chat as PDF"
+                            >
+                                ⬇ Download PDF
+                            </button>
+                        </div>
+                    </div>
                 </section>
             </main>
         </div>
