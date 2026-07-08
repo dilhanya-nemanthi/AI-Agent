@@ -39,21 +39,23 @@ const splitter = new RecursiveCharacterTextSplitter({
 })
 
 const createCollection = async (similarityMetric: SimilarityMetric = "dot_product") => {
+    // Drop the collection if it exists (handles dimension mismatch from old OpenAI setup)
     try {
-        const res = await db.createCollection(ASTRA_DB_COLLECTION, {
-            vector: {
-                dimension: 768, // nomic-embed-text outputs 768 dimensions
-                metric: similarityMetric,
-            }
-        })
-        console.log(res)
+        await db.dropCollection(ASTRA_DB_COLLECTION)
+        console.log(`Dropped existing collection '${ASTRA_DB_COLLECTION}'.`)
     } catch (e: any) {
-        if (e?.name === "CollectionAlreadyExistsError") {
-            console.log(`Collection '${ASTRA_DB_COLLECTION}' already exists, skipping creation.`)
-        } else {
-            throw e
-        }
+        // Ignore error if collection doesn't exist
+        console.log(`No existing collection to drop, continuing...`)
     }
+
+    // Recreate with correct 768 dimensions for nomic-embed-text
+    const res = await db.createCollection(ASTRA_DB_COLLECTION, {
+        vector: {
+            dimension: 768, // nomic-embed-text outputs 768 dimensions
+            metric: similarityMetric,
+        }
+    })
+    console.log(`Collection '${ASTRA_DB_COLLECTION}' created with 768 dimensions.`, res)
 }
 
 const scrapePage = async (url: string) => {
