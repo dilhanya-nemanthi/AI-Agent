@@ -1,62 +1,112 @@
 "use client"
-import Image from "next/image"
-import f1GPTLogo from "./assets/f1-logo.jpg"
-import {useChat} from "ai/react"
-import {Message} from "ai"
+import { useRef } from "react"
+import { useChat } from "ai/react"
+import { Message } from "ai"
 import LoadingBubble from "./components/LoadingBubble"
 import PromptSuggestionRow from "./components/PromptSuggestionRow"
-import Bubble from "./components/Bubble"    
+import Bubble from "./components/Bubble"
 
+const Home = () => {
+    const { append, isLoading, messages, input, handleInputChange, handleSubmit } = useChat()
+    const chatContainerRef = useRef<HTMLDivElement>(null)
 
-const Home=()=>{
+    const noMessages = !messages || messages.length === 0
 
-    const {append,isLoading,messages,input,handleInputChange,handleSubmit}=useChat()
+    // Only user messages go into the sidebar history
+    const userMessages = messages.filter(m => m.role === "user")
 
-    const noMessages=!messages || messages.length===0
-
-    const handlePrompt=(promptText)=>{
-        const msg: Message={
+    const handlePrompt = (promptText: string) => {
+        const msg: Message = {
             id: crypto.randomUUID(),
-            content:promptText,
-            role:'user'
+            content: promptText,
+            role: "user",
         }
-        append(msg);
+        append(msg)
     }
-    return(
-        <main>
-            <Image src={f1GPTLogo} width="250" alt="f1GPT"/>
-            <section className={noMessages?" ":"populated"}>
-                {noMessages ?(
-                    <>
-                    <p className="starter-text">
-                        The ultimate place for Formula One super fans!
-                        Ask F1GPT anything about the fantastic topic of F1 racing and it will come back with the most up-to-date answers.
-                        We hope you enjoy!
-                    </p>
-                    <br />
-                
-                    <PromptSuggestionRow onPromptClick={handlePrompt}/>
-                    </>
-                    
-                ) :(
-                    <>
-                    {messages.map((message, index)=><Bubble key={`message-${index}`} message={messages}/>)}
-                    {isLoading && <LoadingBubble/>}
-                    </>
+
+    const scrollToMessage = (index: number) => {
+        const el = document.getElementById(`message-${index}`)
+        if (el && chatContainerRef.current) {
+            el.scrollIntoView({ behavior: "smooth", block: "start" })
+        }
+    }
+
+    // Find the index of a user message in the full messages array
+    const getMessageIndex = (userMsg: Message) =>
+        messages.findIndex(m => m.id === userMsg.id)
+
+    return (
+        <div className="app-layout">
+            {/* ── Left Sidebar ── */}
+            <aside className="sidebar">
+                <div className="sidebar-header">
+                    <span className="sidebar-icon"></span>
+                    <h2>History</h2>
+                </div>
+
+                {userMessages.length === 0 ? (
+                    <p className="sidebar-empty">No questions yet.</p>
+                ) : (
+                    <ul className="sidebar-list">
+                        {userMessages.map((msg, i) => (
+                            <li key={msg.id}>
+                                <button
+                                    className="sidebar-item"
+                                    onClick={() => scrollToMessage(getMessageIndex(msg))}
+                                    title={msg.content}
+                                >
+                                    <span className="sidebar-num">{i + 1}</span>
+                                    <span className="sidebar-text">
+                                        {msg.content.length > 60
+                                            ? msg.content.slice(0, 60) + "…"
+                                            : msg.content}
+                                    </span>
+                                </button>
+                            </li>
+                        ))}
+                    </ul>
                 )}
+            </aside>
 
-                <form  onSubmit={handleSubmit}>
-                    <input className="question-box" onChange={handleInputChange}
-                        value={input} placeholder="Ask me something"/>
-                    <input type="submit" />
-                    
-                </form>
+            {/* ── Main Panel ── */}
+            <main>
+                <h1 className="title">Astronomy Research Agent</h1>
 
-            </section>
-        </main>
+                <section className={noMessages ? " " : "populated"} ref={chatContainerRef as any}>
+                    {noMessages ? (
+                        <>
+                            <p className="starter-text">
+                                Explore the wonders of the universe with AI.
+                                Ask the Astronomy Research Agent anything about planets, stars, galaxies,
+                                black holes, space missions, exoplanets, or the latest discoveries.
+                            </p>
+                            <br />
+                            <PromptSuggestionRow onPromptClick={handlePrompt} />
+                        </>
+                    ) : (
+                        <>
+                            {messages.map((message, index) => (
+                                <div id={`message-${index}`} key={`message-${index}`}>
+                                    <Bubble message={message} />
+                                </div>
+                            ))}
+                            {isLoading && <LoadingBubble />}
+                        </>
+                    )}
+
+                    <form onSubmit={handleSubmit}>
+                        <input
+                            className="question-box"
+                            onChange={handleInputChange}
+                            value={input}
+                            placeholder="Ask me something"
+                        />
+                        <input type="submit" value="Ask" />
+                    </form>
+                </section>
+            </main>
+        </div>
     )
 }
 
-export default Home;
-
-
+export default Home

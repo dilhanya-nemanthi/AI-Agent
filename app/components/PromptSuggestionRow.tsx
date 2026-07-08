@@ -2,10 +2,15 @@ import PromptSuggestionButton from "./PromptSuggestionButton";
 
 const PromptSuggestionRow=({onPromptClick})=>{
     const prompts=[
-        "Who is the head of racing for Aston Martin's F1 Team?",
-        "Who is thee highest paid driver in F1 2026?",
-        "Who will be the newest driver for Ferari?",
-        "Who is the current Formula one champion? "
+        "Stars",
+        "Planets",
+        "Galaxies",
+        "Asteriods",
+        "Black holes",  
+        "Space missions",
+        "Exoplanets",
+        "Latest discoveries",
+        "Space research"
     ]
     return (
         <div className="prompt-suggestions">

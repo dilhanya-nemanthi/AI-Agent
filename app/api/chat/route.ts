@@ -15,7 +15,7 @@ const {
 const ollama = new Ollama({ host: OLLAMA_HOST ?? "http://localhost:11434" })
 
 const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN)
-const db = client.db(ASTRA_DB_API_ENDPOINT, { namespace: ASTRA_DB_NAMESPACE })
+const db = client.db(ASTRA_DB_API_ENDPOINT, { keyspace: ASTRA_DB_NAMESPACE })
 
 export async function POST(req: Request) {
     try {
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         const template = {
             role: "system",
             content: `
-            You are an AI chatbot that is an expert in Formula 1.
+            You are an AI chatbot that is an expert in Astronomy.
             Use the context to answer the user's question.
             If the answer is not in the context, say that you don't know.
             Question: ${lastMessage}
@@ -67,19 +67,27 @@ export async function POST(req: Request) {
             messages: [template, ...messages],
         })
 
-        // Convert the Ollama async-iterable stream to a Web ReadableStream
+        // Stream in Vercel AI SDK data stream protocol so useChat can parse it
+        // Format: `0:"<chunk>"\n` per the AI SDK wire protocol
         const stream = new ReadableStream({
             async start(controller) {
                 const encoder = new TextEncoder()
                 for await (const chunk of response) {
                     const text = chunk.message?.content ?? ""
-                    if (text) controller.enqueue(encoder.encode(text))
+                    if (text) {
+                        // Encode as AI SDK data stream format: 0:"<text>"\n
+                        const formatted = `0:${JSON.stringify(text)}\n`
+                        controller.enqueue(encoder.encode(formatted))
+                    }
                 }
                 controller.close()
             },
         })
         return new Response(stream, {
-            headers: { "Content-Type": "text/plain; charset=utf-8" },
+            headers: {
+                "Content-Type": "text/plain; charset=utf-8",
+                "x-vercel-ai-data-stream": "v1",
+            },
         })
 
     } catch (err) {

@@ -23,11 +23,8 @@ const ollama = new Ollama({ host: OLLAMA_HOST ?? "http://localhost:11434" })
 const EMBEDDING_MODEL = OLLAMA_EMBEDDING_MODEL ?? "nomic-embed-text"
 
 const f1Data = [
-    'https://en.wikipedia.org/wiki/Formula_One',
-    'https://www.formula1.com/',
-    "https://www.skysports.com/f1",
-    "https://www.espn.com/f1",
-    "https://www.bbc.com/sport/formula1"
+    'https://www.nasa.gov/'
+    
 ]
 
 const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN)
