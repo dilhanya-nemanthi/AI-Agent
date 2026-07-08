@@ -122,18 +122,54 @@ body{
     word-break: break-word;
 }
 
+/* Day-group sections inside sidebar */
+.sidebar-section {
+    margin-bottom: 14px;
+}
+
+.sidebar-section-label {
+    margin: 0 0 6px 4px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(160,190,255,0.55);
+}
+
+/* Past-history items look slightly different from current-session items */
+.sidebar-item-past {
+    background: rgba(255,255,255,0.03);
+    border-style: dashed;
+    color: rgba(255,255,255,0.55);
+}
+
+.sidebar-item-past:hover {
+    background: rgba(120,255,180,0.12);
+    border-color: rgba(120,255,180,0.3);
+    color: #cfffdf;
+}
+
+.sidebar-past-icon {
+    flex-shrink: 0;
+    font-size: 13px;
+    opacity: 0.6;
+    margin-top: 1px;
+}
+
 main{
     flex: 1;
+    min-height: 0;
     height: 100vh;
     background-color: rgba(255, 255, 255, 0.08);
     backdrop-filter: blur(10px);
-    display:flex;
+    display: flex;
     align-items: center;
     flex-direction: column;
-    justify-content: space-between; 
-    padding:20px;
-    text-align:center;
-    color:antiquewhite;
+    justify-content: flex-start;
+    padding: 20px;
+    box-sizing: border-box;
+    text-align: center;
+    color: antiquewhite;
     overflow: hidden;
 }
 
@@ -142,137 +178,108 @@ section{
 }
 
 section.populated{
-    height: 100%;
+    flex: 1;
+    min-height: 0;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    overflow: scroll;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
 
-
+/* Messages stack top-to-bottom; JS handles auto-scroll to bottom */
+.messages-wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
 }
 
 .starter-text {
     font-weight: bold;
-    padding:0 80px;
+    padding:20px 20px;
 
     
 }
 
-/* ── Bottom toolbar: input + all buttons in one row ── */
+.intro-block {
+    margin-top: 4px;
+    text-align: center;
+    width: 100%;
+}
+
+/* ── Bottom toolbar: input row on top, buttons below ── */
 .chat-toolbar {
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    gap: 10px;
     width: 100%;
     padding-top: 14px;
     border-top: 1px solid rgba(255,255,255,0.15);
 }
 
+/* Row 1: input fills full width */
 .chat-form {
     display: flex;
-    flex: 1;
-    gap: 0;
-    min-width: 0;
+    width: 100%;
     box-sizing: border-box;
 }
 
-form{
-    height: 50px;
-    width: 80%;
-    display:flex;
-    border-top: #828282 2px;
-    padding-top: 20px;
-    border-radius: 0 0 10px 10px;
-    overflow:hidden;
-    box-sizing: border-box;
-}
-
-input.question-box{
+input.question-box {
     flex: 1;
+    width: 100%;
     min-width: 0;
     padding: 10px 14px;
-    border-radius: 8px 0 0 8px;
+    border-radius: 8px;
     border: 1px solid rgba(255,255,255,0.2);
-    background: rgba(255,255,255,0.12);
-    color: antiquewhite;
+    background: rgb(255, 255, 255);
+    color: rgb(53, 51, 48);
     font-size: 14px;
     font-family: 'Courier New', Courier, monospace;
     outline: none;
     transition: border-color 0.2s;
+    box-sizing: border-box;
 }
 
 input.question-box::placeholder {
-    color: rgba(255, 255, 255, 0.94);
+    color: rgba(44, 40, 40, 0.94);
 }
 
 input.question-box:focus {
     border-color: rgb(178, 195, 255);
 }
 
+/* Row 2: three buttons side by side */
 .toolbar-actions {
     display: flex;
     flex-direction: row;
     gap: 8px;
-    flex-shrink: 0;
+    width: 100%;
 }
 
-.btn-pause, .btn-pdf {
-    padding: 8px 18px;
-    border-radius: 8px;
-    border: none;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 13px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: opacity 0.2s, transform 0.15s, background 0.2s;
-    letter-spacing: 0.03em;
-}
-
-.btn-pause {
-    background: rgba(255,255,255,0.12);
-    color: #fff;
-    border: 1px solid rgba(255,100,100,0.4);
-}
-
-.btn-pause:hover:not(:disabled) {
-    background: rgba(255,255,255,0.12);
-    transform: translateY(-1px);
-}
-
-.btn-pdf {
-    background: rgba(255,255,255,0.12);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.12);
-}
-
-.btn-pdf:hover:not(:disabled) {
-    background:rgba(255,255,255,0.12);
-    transform: translateY(-1px);
-}
-
-.btn-pause:disabled, .btn-pdf:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
-}
-
-input[type=submit]{
-    padding: 10px 20px;
+/* Shared button style – matches Ask button */
+.action-btn {
+   flex: 1;
+    padding: 10px 16px;
     font-size: 14px;
-    background-color: #383838;
-    color: antiquewhite;
+    background-color: #b3aeae;
+    color: #383838;
     border: none;
-    border-radius: 0 8px 8px 0;
+    border-radius: 8px;
     cursor: pointer;
     font-family: 'Courier New', Courier, monospace;
     font-weight: 600;
-    transition: background 0.2s;
+    transition: background 0.2s, transform 0.15s;
     white-space: nowrap;
 }
 
-input[type=submit]:hover {
-    background-color: #555;
+.action-btn:hover:not(:disabled) {
+    background-color: #b3aeae;
+    transform: translateY(-1px);
 }
+
+
+
 
 .bubble{
     margin:8px;
@@ -295,11 +302,12 @@ input[type=submit]:hover {
 }
 .bubble.assistant{
     border-radius:20px 20px 20px 0px;
-    background-color:#dce7ff    ;
+    background-color:#dce7ff;
 }
 
 .prompt-suggestion-row{
-    width:100%
+    
+    border-radius: 10px
 }
 
 .promt-suggestion-button{
@@ -311,6 +319,7 @@ input[type=submit]:hover {
     border-radius:10px;
     color:#383838;
     box-shadow:#959da533 0 8px 24px;
+    padding-bottom: 50%;
     
 }
 .promt-suggestion-button:hover{
