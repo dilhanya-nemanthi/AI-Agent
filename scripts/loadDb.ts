@@ -23,7 +23,14 @@ const ollama = new Ollama({ host: OLLAMA_HOST ?? "http://localhost:11434" })
 const EMBEDDING_MODEL = OLLAMA_EMBEDDING_MODEL ?? "nomic-embed-text"
 
 const f1Data = [
-    'https://www.nasa.gov/'
+    'https://www.nasa.gov/',
+    'https://skyandtelescope.org/astronomy-resources/',
+    'https://www.planetary.org/',
+    'https://www.space.com/',
+    'https://www.space.com/news/2002245/planets-of-the-solar-system-240224',
+    'https://www.space.com/news',
+    'https://www.space.com/universe'
+
     
 ]
 
