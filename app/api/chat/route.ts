@@ -33,19 +33,27 @@ export async function POST(req: Request) {
         try {
             const collection = await db.collection(ASTRA_DB_COLLECTION)
 
-            const cursor = collection.find(null, {
-                sort: {
-                    $vector: embeddingResponse.embedding,
-                },
-                limit: 10,
-            })
+            // Timeout after 5 seconds to avoid hanging if DB is unreachable
+            const dbQuery = async () => {
+                const cursor = collection.find(null, {
+                    sort: {
+                        $vector: embeddingResponse.embedding,
+                    },
+                    limit: 10,
+                })
+                return await cursor.toArray()
+            }
 
-            const documents = await cursor.toArray()
+            const timeout = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("DB query timeout")), 5000)
+            )
+
+            const documents = await Promise.race([dbQuery(), timeout]) as any[]
             const docsMap = documents?.map(doc => doc.text)
             docContext = JSON.stringify(docsMap)
 
         } catch (err) {
-            console.log("Error querying db..")
+            console.log("Error querying db:", err instanceof Error ? err.message : err)
             docContext = ""
         }
 

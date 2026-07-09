@@ -32,6 +32,7 @@ const Home = () => {
     const { append, isLoading, messages, input, handleInputChange, handleSubmit, stop } = useChat()
     const chatContainerRef = useRef<HTMLDivElement>(null)
     const bottomRef = useRef<HTMLDivElement>(null)
+    const [sidebarOpen, setSidebarOpen] = useState(false)
 
     // Stable session ID for this page load
     const sessionId = useRef<string>(crypto.randomUUID())
@@ -149,8 +150,23 @@ const Home = () => {
 
     return (
         <div className="app-layout">
+            {/* ── Hamburger toggle (visible ≤768px) ── */}
+            <button
+                className="sidebar-toggle"
+                onClick={() => setSidebarOpen(prev => !prev)}
+                aria-label="Toggle sidebar"
+            >
+                {sidebarOpen ? "✕" : "☰"}
+            </button>
+
+            {/* Overlay behind sidebar on mobile */}
+            <div
+                className={`sidebar-overlay${sidebarOpen ? " open" : ""}`}
+                onClick={() => setSidebarOpen(false)}
+            />
+
             {/* ── Left Sidebar ── */}
-            <aside className="sidebar">
+            <aside className={`sidebar${sidebarOpen ? " open" : ""}`}>
                 <div className="sidebar-header">
                     <span className="sidebar-icon"></span>
                     <h2>History</h2>
