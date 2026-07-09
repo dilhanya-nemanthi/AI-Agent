@@ -1,5 +1,5 @@
-import { Ollama } from "ollama"
-// OllamaStream was removed in ai v3; using native ReadableStream instead
+import { streamText } from "ai"
+import { createGroq } from "@ai-sdk/groq"
 import { DataAPIClient } from "@datastax/astra-db-ts"
 
 const {
@@ -7,15 +7,14 @@ const {
     ASTRA_DB_COLLECTION,
     ASTRA_DB_API_ENDPOINT,
     ASTRA_DB_APPLICATION_TOKEN,
-    OLLAMA_HOST,
-    OLLAMA_MODEL,
-    OLLAMA_EMBEDDING_MODEL,
+    GROQ_API_KEY,
 } = process.env
 
-const ollama = new Ollama({ host: OLLAMA_HOST ?? "http://localhost:11434" })
+const groq = createGroq({ apiKey: GROQ_API_KEY })
 
+// Astra DB client (optional — gracefully skipped if unavailable)
 const client = new DataAPIClient(ASTRA_DB_APPLICATION_TOKEN)
-const db = client.db(ASTRA_DB_API_ENDPOINT, { keyspace: ASTRA_DB_NAMESPACE })
+const db = client.db(ASTRA_DB_API_ENDPOINT!, { keyspace: ASTRA_DB_NAMESPACE })
 
 export async function POST(req: Request) {
     try {
@@ -24,23 +23,19 @@ export async function POST(req: Request) {
 
         let docContext = ""
 
-        // Generate embedding using Ollama (nomic-embed-text → 768 dimensions)
-        const embeddingResponse = await ollama.embeddings({
-            model: OLLAMA_EMBEDDING_MODEL ?? "nomic-embed-text",
-            prompt: lastMessage,
-        })
-
+        // Try to fetch relevant context from Astra DB vector search
+        // This is optional — if DB is unreachable, the agent still works
         try {
-            const collection = await db.collection(ASTRA_DB_COLLECTION)
+            const collection = await db.collection(ASTRA_DB_COLLECTION!)
 
-            // Timeout after 5 seconds to avoid hanging if DB is unreachable
+            // Use Groq to generate a search query, then query the DB
+            // Since Groq doesn't offer embeddings, we do a simple text search
+            // If you have embeddings stored, you'll need a separate embedding provider
             const dbQuery = async () => {
-                const cursor = collection.find(null, {
-                    sort: {
-                        $vector: embeddingResponse.embedding,
-                    },
-                    limit: 10,
-                })
+                const cursor = collection.find(
+                    { $text: lastMessage },
+                    { limit: 5 }
+                )
                 return await cursor.toArray()
             }
 
@@ -57,48 +52,29 @@ export async function POST(req: Request) {
             docContext = ""
         }
 
-        const template = {
-            role: "system",
-            content: `
-            You are an AI chatbot that is an expert in Astronomy.
-            Use the context to answer the user's question.
-            If the answer is not in the context, say that you don't know.
-            Question: ${lastMessage}
-            Context: ${docContext}
-            `
-        }
+        const systemPrompt = `
+You are an AI chatbot that is an expert in Astronomy.
+Use the context below (if available) to enhance your answers.
+If the context is empty or irrelevant, use your own knowledge to answer.
+Be informative, accurate, and engaging.
 
-        // Stream chat response from Ollama
-        const response = await ollama.chat({
-            model: OLLAMA_MODEL ?? "llama3",
-            stream: true,
-            messages: [template, ...messages],
+Context: ${docContext}
+`.trim()
+
+        // Stream chat response from Groq (works on both local and Vercel)
+        const result = await streamText({
+            model: groq("llama-3.3-70b-versatile"),
+            system: systemPrompt,
+            messages,
         })
 
-        // Stream in Vercel AI SDK data stream protocol so useChat can parse it
-        // Format: `0:"<chunk>"\n` per the AI SDK wire protocol
-        const stream = new ReadableStream({
-            async start(controller) {
-                const encoder = new TextEncoder()
-                for await (const chunk of response) {
-                    const text = chunk.message?.content ?? ""
-                    if (text) {
-                        // Encode as AI SDK data stream format: 0:"<text>"\n
-                        const formatted = `0:${JSON.stringify(text)}\n`
-                        controller.enqueue(encoder.encode(formatted))
-                    }
-                }
-                controller.close()
-            },
-        })
-        return new Response(stream, {
-            headers: {
-                "Content-Type": "text/plain; charset=utf-8",
-                "x-vercel-ai-data-stream": "v1",
-            },
-        })
+        return result.toDataStreamResponse()
 
     } catch (err) {
-        throw err
+        console.error("Chat API error:", err)
+        return new Response(
+            JSON.stringify({ error: "Failed to process chat request" }),
+            { status: 500, headers: { "Content-Type": "application/json" } }
+        )
     }
 }
